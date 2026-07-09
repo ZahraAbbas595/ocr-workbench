@@ -1,0 +1,11 @@
+# Python cache and virtual environment
+__pycache__/
+*.pyc
+.venv/
+
+# Secrets — never commit the real .env file
+.env
+
+# Ignore generated OCR results, but keep the folder
+results/*
+!results/.gitkeep
