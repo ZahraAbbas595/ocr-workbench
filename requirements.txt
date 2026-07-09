@@ -1,0 +1,15 @@
+# Local OCR
+pytesseract
+pdf2image
+pillow
+
+# API
+fastapi
+uvicorn
+python-multipart
+
+# Config / secrets
+python-dotenv
+
+# Azure OCR
+azure-ai-documentintelligence
