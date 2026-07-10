@@ -68,8 +68,19 @@ if __name__ == "__main__":
         sys.exit(1)
 
     file_path = sys.argv[1]
-    report = run_comparison(file_path)
-    saved_path = save_report(report)
+
+    try:
+        report = run_comparison(file_path)
+        saved_path = save_report(report)
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+    except ValueError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Something went wrong: {e}")
+        sys.exit(1)
 
     print("\n--- SUMMARY ---")
     print(f"Similarity: {report['comparison']['similarity_percent']}%")
