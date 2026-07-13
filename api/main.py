@@ -2,7 +2,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 
 from local_ocr.ocr import run_ocr, save_result
 
@@ -25,6 +25,8 @@ async def ocr_local(file: UploadFile = File(...)) -> dict:
     Also saves the result as a JSON file in the results folder.
     """
     # Check the file type is one we support
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No filename provided.")
     suffix = Path(file.filename).suffix.lower()
     if suffix not in ALLOWED_TYPES:
         raise HTTPException(

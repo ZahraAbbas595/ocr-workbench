@@ -3,8 +3,8 @@ import json
 import sys
 from pathlib import Path
 
-from local_ocr.ocr import run_ocr as run_local_ocr
 from azure_ocr.client import run_azure_ocr
+from local_ocr.ocr import run_ocr as run_local_ocr
 
 
 def compare_texts(local_text: str, azure_text: str) -> dict:

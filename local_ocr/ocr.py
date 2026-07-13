@@ -1,12 +1,12 @@
 import json
 import os
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 import pytesseract
+from dotenv import load_dotenv
 from pdf2image import convert_from_path
 from PIL import Image
-from dotenv import load_dotenv
 
 # Load the .env file so we can read TESSERACT_PATH and POPPLER_PATH
 load_dotenv()
@@ -18,13 +18,15 @@ pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_PATH", "tesseract")
 def extract_text_from_image(image_path: str) -> str:
     """Open an image file and return the text found in it."""
     img = Image.open(image_path)
-    text = pytesseract.image_to_string(img)
+    text: str = pytesseract.image_to_string(img)
     return text.strip()
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """Convert each PDF page to an image, run OCR on each, return all text joined."""
     poppler_path = os.getenv("POPPLER_PATH")
+    if not poppler_path:
+        raise ValueError("POPPLER_PATH is not set in .env")
     pages = convert_from_path(pdf_path, poppler_path=poppler_path)
     all_text: list[str] = []
     for page in pages:
@@ -68,7 +70,8 @@ def run_ocr(file_path: str) -> dict:
 def save_result(result: dict, output_dir: str = "results") -> str:
     """Save the OCR result as a JSON file. Returns the path it was saved to."""
     Path(output_dir).mkdir(exist_ok=True)
-    filename = f"local_{Path(result['file']).stem}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"local_{Path(result['file']).stem}_{timestamp_str}.json"
     output_path = Path(output_dir) / filename
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
