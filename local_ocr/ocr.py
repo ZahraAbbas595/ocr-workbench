@@ -7,13 +7,16 @@ from dotenv import load_dotenv
 from pdf2image import convert_from_path
 from PIL import Image
 
-from models import OCRResult
+from models import ConfigError, OCRResult
 
 # Load the .env file so we can read TESSERACT_PATH and POPPLER_PATH
 load_dotenv()
 
-# Tell pytesseract where tesseract.exe lives on Windows
-pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_PATH", "tesseract")
+TESSERACT_PATH = os.getenv("TESSERACT_PATH")
+if not TESSERACT_PATH:
+    raise ConfigError("TESSERACT_PATH is not set in .env")
+
+pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 
 
 def extract_text_from_image(image_path: str) -> str:
@@ -27,7 +30,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     """Convert each PDF page to an image, run OCR on each, return all text joined."""
     poppler_path = os.getenv("POPPLER_PATH")
     if not poppler_path:
-        raise ValueError("POPPLER_PATH is not set in .env")
+        raise ConfigError("POPPLER_PATH is not set in .env")
     pages = convert_from_path(pdf_path, poppler_path=poppler_path)
     all_text: list[str] = []
     for page in pages:

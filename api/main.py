@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
 from local_ocr.ocr import run_ocr, save_result
-from models import OCRResult
+from models import ConfigError, OCRResult
 
 app = FastAPI(title="OCR Workbench API")
 
@@ -47,8 +47,15 @@ async def ocr_local(file: UploadFile = File(...)) -> OCRResult:
         saved_path = save_result(result)
         result.saved_to = saved_path
         return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"OCR failed: {str(e)}")
+    except FileNotFoundError:
+        raise HTTPException(status_code=400, detail="Uploaded file could not be read.")
+    except ConfigError:
+        # Server misconfiguration — safe to say something is wrong, not what or where
+        raise HTTPException(status_code=500, detail="Server is not configured correctly.")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="OCR processing failed. Please try again.")
     finally:
         # Clean up the temporary file
         Path(tmp_path).unlink(missing_ok=True)

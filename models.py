@@ -3,6 +3,10 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+class ConfigError(Exception):
+    """Raised when required environment variables are missing or invalid."""
+
+
 class OCRResult(BaseModel):
     """The result of running OCR on a single file."""
 
@@ -39,3 +43,12 @@ class ErrorResponse(BaseModel):
 
     error: str
     detail: str
+
+
+class Settings(BaseModel):
+    """Required configuration loaded from environment variables."""
+
+    tesseract_path: str
+    poppler_path: str
+    azure_endpoint: str
+    azure_key: str
