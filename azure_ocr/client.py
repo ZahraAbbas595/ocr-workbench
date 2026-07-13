@@ -1,7 +1,7 @@
 import json
 import os
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
@@ -57,7 +57,8 @@ def run_azure_ocr(file_path: str) -> dict:
 def save_azure_result(result: dict, output_dir: str = "results") -> str:
     """Save the Azure OCR result as a JSON file. Returns the path it was saved to."""
     Path(output_dir).mkdir(exist_ok=True)
-    filename = f"azure_{Path(result['file']).stem}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"azure_{Path(result['file']).stem}_{timestamp_str}.json"
     output_path = Path(output_dir) / filename
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
