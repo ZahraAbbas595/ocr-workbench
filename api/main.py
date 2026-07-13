@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
 from local_ocr.ocr import run_ocr, save_result
+from models import OCRResult
 
 app = FastAPI(title="OCR Workbench API")
 
@@ -19,7 +20,7 @@ def home() -> dict:
 
 
 @app.post("/ocr/local")
-async def ocr_local(file: UploadFile = File(...)) -> dict:
+async def ocr_local(file: UploadFile = File(...)) -> OCRResult:
     """
     Upload an image or PDF. Runs local OCR and returns the extracted text.
     Also saves the result as a JSON file in the results folder.
@@ -42,9 +43,9 @@ async def ocr_local(file: UploadFile = File(...)) -> dict:
     try:
         result = run_ocr(tmp_path)
         # Fix the file name in the result to the real uploaded name, not the temp name
-        result["file"] = file.filename
+        result.file = file.filename
         saved_path = save_result(result)
-        result["saved_to"] = saved_path
+        result.saved_to = saved_path
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OCR failed: {str(e)}")

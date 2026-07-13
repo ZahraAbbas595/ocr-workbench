@@ -1,13 +1,13 @@
 import difflib
-import json
 import sys
 from pathlib import Path
 
 from azure_ocr.client import run_azure_ocr
 from local_ocr.ocr import run_ocr as run_local_ocr
+from models import ComparisonReport, ComparisonStats
 
 
-def compare_texts(local_text: str, azure_text: str) -> dict:
+def compare_texts(local_text: str, azure_text: str) -> ComparisonStats:
     """
     Compare two pieces of text and return simple stats:
     a similarity score and a readable diff.
@@ -25,15 +25,15 @@ def compare_texts(local_text: str, azure_text: str) -> dict:
         )
     )
 
-    return {
-        "similarity_percent": similarity,
-        "local_char_count": len(local_text),
-        "azure_char_count": len(azure_text),
-        "diff": diff_lines,
-    }
+    return ComparisonStats(
+        similarity_percent=similarity,
+        local_char_count=len(local_text),
+        azure_char_count=len(azure_text),
+        diff=diff_lines,
+    )
 
 
-def run_comparison(file_path: str) -> dict:
+def run_comparison(file_path: str) -> ComparisonReport:
     """Run both OCR engines on the same file and compare the results."""
     print(f"Running local OCR on {file_path} ...")
     local_result = run_local_ocr(file_path)
@@ -41,24 +41,24 @@ def run_comparison(file_path: str) -> dict:
     print(f"Running Azure OCR on {file_path} ...")
     azure_result = run_azure_ocr(file_path)
 
-    comparison = compare_texts(local_result["text"], azure_result["text"])
+    comparison = compare_texts(local_result.text, azure_result.text)
 
-    report = {
-        "file": Path(file_path).name,
-        "local_result": local_result,
-        "azure_result": azure_result,
-        "comparison": comparison,
-    }
+    report = ComparisonReport(
+        file=Path(file_path).name,
+        local_result=local_result,
+        azure_result=azure_result,
+        comparison=comparison,
+    )
     return report
 
 
-def save_report(report: dict, output_dir: str = "results") -> str:
+def save_report(report: ComparisonReport, output_dir: str = "results") -> str:
     """Save the full comparison report as JSON."""
     Path(output_dir).mkdir(exist_ok=True)
-    filename = f"comparison_{Path(report['file']).stem}.json"
+    filename = f"comparison_{Path(report.file).stem}.json"
     output_path = Path(output_dir) / filename
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2, ensure_ascii=False)
+        f.write(report.model_dump_json(indent=2))
     return str(output_path)
 
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print("\n--- SUMMARY ---")
-    print(f"Similarity: {report['comparison']['similarity_percent']}%")
-    print(f"Local characters extracted: {report['comparison']['local_char_count']}")
-    print(f"Azure characters extracted: {report['comparison']['azure_char_count']}")
+    print(f"Similarity: {report.comparison.similarity_percent}%")
+    print(f"Local characters extracted: {report.comparison.local_char_count}")
+    print(f"Azure characters extracted: {report.comparison.azure_char_count}")
     print(f"Full report saved to: {saved_path}")

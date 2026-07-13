@@ -1,4 +1,3 @@
-import json
 import os
 from datetime import datetime
 from pathlib import Path
@@ -7,6 +6,8 @@ import pytesseract
 from dotenv import load_dotenv
 from pdf2image import convert_from_path
 from PIL import Image
+
+from models import OCRResult
 
 # Load the .env file so we can read TESSERACT_PATH and POPPLER_PATH
 load_dotenv()
@@ -35,7 +36,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     return "\n\n--- page break ---\n\n".join(all_text)
 
 
-def run_ocr(file_path: str) -> dict:
+def run_ocr(file_path: str) -> OCRResult:
     """
     Main function. Takes a file path, figures out if it is an image or PDF,
     runs OCR, and returns a result dictionary.
@@ -56,23 +57,23 @@ def run_ocr(file_path: str) -> dict:
     else:
         raise ValueError(f"Unsupported file type: {suffix}")
 
-    result: dict = {
-        "source": "local_tesseract",
-        "file": path.name,
-        "file_type": file_type,
-        "timestamp": datetime.utcnow().isoformat(),
-        "text": text,
-    }
+    result = OCRResult(
+        source="local_tesseract",
+        file=path.name,
+        file_type=file_type,
+        timestamp=datetime.utcnow(),
+        text=text,
+    )
 
     return result
 
 
-def save_result(result: dict, output_dir: str = "results") -> str:
+def save_result(result: OCRResult, output_dir: str = "results") -> str:
     """Save the OCR result as a JSON file. Returns the path it was saved to."""
     Path(output_dir).mkdir(exist_ok=True)
     timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    filename = f"local_{Path(result['file']).stem}_{timestamp_str}.json"
+    filename = f"local_{Path(result.file).stem}_{timestamp_str}.json"
     output_path = Path(output_dir) / filename
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=2, ensure_ascii=False)
+        f.write(result.model_dump_json(indent=2))
     return str(output_path)
