@@ -9,3 +9,5 @@ __pycache__/
 # Ignore generated OCR results, but keep the folder
 results/*
 !results/.gitkeep
+# Private/internal documents — never commit these
+samples/Best_Coding_Practices*.pdf
