@@ -110,8 +110,10 @@ This prints a similarity score and saves a full comparison report to `results/`.
 ## What I learned / found
 
 - Azure's Free (F0) tier only processes the **first 2 pages** of any document and caps files at 4 MB — a proof-of-concept limit, not production-ready.
-- On the sample file used in this project, Azure's OCR was more accurate on logos and small text than local Tesseract, but only covered a fraction of the document because of the F0 page limit.
-- Comparing similarity by raw text match isn't perfectly fair when one engine reads fewer pages than the other — worth remembering when reading the numbers.
+- On a multi-page test document, Azure was more accurate than local Tesseract on logos and small text, but only covered a fraction of the pages because of the F0 page limit — similarity came out around 31%, almost entirely due to missing pages rather than poor accuracy.
+- Switching to a clean 1-page test file (fully within Azure's F0 page limit) gave a fair, apples-to-apples comparison: **98.4% similarity**, confirming both engines agree closely when Azure isn't cut off mid-document.
+- Comparing similarity by raw text match isn't meaningful when one engine reads fewer pages than the other — worth checking the page count is within Azure's F0 limit before trusting the similarity score.
+- Enforced this in code: `run_azure_ocr` now checks the PDF's page count up front and logs a warning if it exceeds Azure's F0 limit, instead of silently returning a partial result.
 
 ## Git workflow used
 
