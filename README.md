@@ -20,14 +20,67 @@ ocr-workbench/
 
 ## Setup
 
-1. Install Python 3.10+, [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki), and [Poppler](https://github.com/oschwartz10612/poppler-windows/releases) (Windows).
-2. Clone this repo and create a virtual environment:
+### 1. Install prerequisites
+
+**Windows:**
+- [Python 3.10+](https://www.python.org/downloads/)
+- [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki) — note the install path (usually `C:\Program Files\Tesseract-OCR`)
+- [Poppler for Windows](https://github.com/oschwartz10612/poppler-windows/releases) — unzip and note the `Library\bin` path
+
+**macOS:**
+```bash
+brew install tesseract poppler
+```
+
+**Linux (Debian/Ubuntu):**
+```bash
+sudo apt-get update
+sudo apt-get install -y tesseract-ocr poppler-utils
+```
+
+On macOS and Linux, both tools install onto your system PATH automatically — no extra path configuration needed.
+
+### 2. Clone and set up the virtual environment
+
+```bash
+git clone https://github.com/ZahraAbbas595/ocr-workbench.git
+cd ocr-workbench
 python -m venv .venv
-.venv\Scripts\activate
+```
+
+Activate it:
+- **Windows:** `.venv\Scripts\activate`
+- **macOS/Linux:** `source .venv/bin/activate`
+
+Install dependencies:
+```bash
 pip install -r requirements.txt
-3. Copy `.env.example` to `.env` and fill in:
-   - Your local Tesseract and Poppler install paths.
-   - Your own Azure Document Intelligence endpoint and key (see below).
+```
+
+### 3. Configure environment variables
+
+```bash
+cp .env.example .env
+```
+(On Windows, use `copy .env.example .env` instead.)
+
+Then edit `.env`:
+- **`TESSERACT_PATH` / `POPPLER_PATH`** — only required on Windows. Leave blank on macOS/Linux.
+- **`AZURE_DOC_INTEL_ENDPOINT` / `AZURE_DOC_INTEL_KEY`** — required on all platforms. See below.
+
+### 4. Getting an Azure Document Intelligence key
+
+1. Create a free [Azure for Students](https://azure.microsoft.com/en-us/free/students) account (no credit card needed) or a normal Azure free account.
+2. In the Azure Portal, create a **Document Intelligence** resource.
+3. **Set the pricing tier to Free (F0)** — this gives 500 free pages/month, limited to the first 2 pages per document and 4 MB per file.
+4. Copy the Endpoint and Key from the resource's "Keys and Endpoint" page into your `.env` file. Never commit this file.
+
+### 5. Verify the setup
+
+```bash
+pytest -v
+```
+All tests should pass. This confirms Tesseract, Poppler, and your Python environment are wired up correctly (Azure tests are not included here to avoid consuming your free-tier quota on every test run).
 
 ### Getting an Azure Document Intelligence key
 
@@ -42,8 +95,13 @@ pip install -r requirements.txt
 python -c "from local_ocr.ocr import run_ocr, save_result; r = run_ocr('samples/yourfile.pdf'); save_result(r)"
 
 **Via the API (upload in browser):**
+```bash
 uvicorn api.main:app --reload
-Then open `http://127.0.0.1:8000/docs` and try the `POST /ocr/local` endpoint.
+```
+Then open `http://127.0.0.1:8000/docs` and try any of:
+- `POST /ocr/local` — local Tesseract OCR
+- `POST /ocr/azure` — Azure Document Intelligence OCR
+- `POST /ocr/compare` — runs both and returns a comparison report
 
 **Compare local vs Azure on one file:**
 python compare.py samples/yourfile.pdf
