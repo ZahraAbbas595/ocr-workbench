@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytesseract
@@ -64,7 +64,7 @@ def run_ocr(file_path: str) -> OCRResult:
         source="local_tesseract",
         file=path.name,
         file_type=file_type,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
         text=text,
     )
 
@@ -74,7 +74,7 @@ def run_ocr(file_path: str) -> OCRResult:
 def save_result(result: OCRResult, output_dir: str = "results") -> str:
     """Save the OCR result as a JSON file. Returns the path it was saved to."""
     Path(output_dir).mkdir(exist_ok=True)
-    timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp_str = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     filename = f"local_{Path(result.file).stem}_{timestamp_str}.json"
     output_path = Path(output_dir) / filename
     with open(output_path, "w", encoding="utf-8") as f:

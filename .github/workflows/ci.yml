@@ -20,7 +20,10 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install ruff mypy
+          pip install ruff mypy pytest
+
+      - name: Install Tesseract
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
 
       - name: Run ruff check
         run: ruff check .
@@ -30,3 +33,9 @@ jobs:
 
       - name: Run mypy
         run: mypy .
+
+        
+        - name: Run tests
+        run: pytest -v
+        env:
+          TESSERACT_PATH: /usr/bin/tesseract
