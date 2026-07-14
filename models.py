@@ -2,6 +2,13 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+# Upload limits
+MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024  # 4 MB — matches Azure F0's hard limit
+ALLOWED_FILE_TYPES: set[str] = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
+
+# Azure Free (F0) tier limits
+AZURE_F0_MAX_PAGES = 2
+
 
 class ConfigError(Exception):
     """Raised when required environment variables are missing or invalid."""

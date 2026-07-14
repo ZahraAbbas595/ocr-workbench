@@ -5,8 +5,9 @@ from pathlib import Path
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
 from dotenv import load_dotenv
+from pypdf import PdfReader
 
-from models import OCRResult
+from models import AZURE_F0_MAX_PAGES, OCRResult
 
 load_dotenv()
 
@@ -32,6 +33,17 @@ def run_azure_ocr(file_path: str) -> OCRResult:
     path = Path(file_path)
     if not path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
+
+    # Azure F0 free tier only reads the first 2 pages — warn early instead of
+    # silently getting a partial result back
+    if path.suffix.lower() == ".pdf":
+        page_count = len(PdfReader(str(path)).pages)
+        if page_count > AZURE_F0_MAX_PAGES:
+            print(
+                f"Warning: '{path.name}' has {page_count} pages, but the Azure "
+                f"Free (F0) tier only processes the first {AZURE_F0_MAX_PAGES}. "
+                "Only a partial result will be returned."
+            )
 
     client = get_client()
 

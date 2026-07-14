@@ -5,12 +5,12 @@ from pathlib import Path
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
 from local_ocr.ocr import run_ocr, save_result
-from models import ConfigError, OCRResult
+from models import ALLOWED_FILE_TYPES, MAX_FILE_SIZE_BYTES, ConfigError, OCRResult
 
 app = FastAPI(title="OCR Workbench API")
 
 # File types we allow
-ALLOWED_TYPES: set[str] = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
+ALLOWED_TYPES = ALLOWED_FILE_TYPES
 
 
 @app.get("/")
@@ -39,6 +39,16 @@ async def ocr_local(file: UploadFile = File(...)) -> OCRResult:
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         shutil.copyfileobj(file.file, tmp)
         tmp_path = tmp.name
+
+    # Enforce a size limit so we don't process oversized files
+    file_size = Path(tmp_path).stat().st_size
+    if file_size > MAX_FILE_SIZE_BYTES:
+        Path(tmp_path).unlink(missing_ok=True)
+        max_mb = MAX_FILE_SIZE_BYTES // (1024 * 1024)
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Max allowed size is {max_mb} MB.",
+        )
 
     try:
         result = run_ocr(tmp_path)
