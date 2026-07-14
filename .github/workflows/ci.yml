@@ -34,8 +34,7 @@ jobs:
       - name: Run mypy
         run: mypy .
 
-        
-        - name: Run tests
+      - name: Run tests
         run: pytest -v
         env:
           TESSERACT_PATH: /usr/bin/tesseract
