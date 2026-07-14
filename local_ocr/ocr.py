@@ -7,16 +7,17 @@ from dotenv import load_dotenv
 from pdf2image import convert_from_path
 from PIL import Image
 
-from models import ConfigError, OCRResult
+from models import OCRResult
 
 # Load the .env file so we can read TESSERACT_PATH and POPPLER_PATH
 load_dotenv()
 
+# On Windows, Tesseract isn't on PATH by default, so TESSERACT_PATH must point
+# to the .exe directly. On Linux/Mac (and CI), it's installed on PATH, so this
+# is optional — pytesseract already defaults to just calling "tesseract".
 TESSERACT_PATH = os.getenv("TESSERACT_PATH")
-if not TESSERACT_PATH:
-    raise ConfigError("TESSERACT_PATH is not set in .env")
-
-pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+if TESSERACT_PATH:
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 
 
 def extract_text_from_image(image_path: str) -> str:
@@ -28,10 +29,13 @@ def extract_text_from_image(image_path: str) -> str:
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """Convert each PDF page to an image, run OCR on each, return all text joined."""
+    # On Windows, Poppler isn't on PATH by default, so POPPLER_PATH must be set.
+    # On Linux/Mac (and CI), it's installed on PATH, so this is optional.
     poppler_path = os.getenv("POPPLER_PATH")
-    if not poppler_path:
-        raise ConfigError("POPPLER_PATH is not set in .env")
-    pages = convert_from_path(pdf_path, poppler_path=poppler_path)
+    if poppler_path:
+        pages = convert_from_path(pdf_path, poppler_path=poppler_path)
+    else:
+        pages = convert_from_path(pdf_path)
     all_text: list[str] = []
     for page in pages:
         text = pytesseract.image_to_string(page)
